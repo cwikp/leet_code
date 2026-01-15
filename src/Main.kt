@@ -50,7 +50,8 @@ fun main() {
 //        left = TreeNode(3)
 //        right = TreeNode(2)
 //    }
-    priorityQueue()
+    val dp = MutableList(3) { MutableList(2) { 0 } }
+    println(dp)
 }
 
 //for the videos lets add a concept of:
@@ -69,10 +70,225 @@ class TreeNode(var `val`: Int) {
     var right: TreeNode? = null
 }
 
+//518. Coin Change II
+//TLE also
+//fun change(amount: Int, coins: IntArray): Int {
+//
+//    val memo = HashMap<Pair<Int, Int>, Int>()
+//
+//    fun backtrack(coinIndex: Int, sum: Int): Int {
+//        val key = coinIndex to sum
+//        if(memo.contains(key)) {
+//            return memo[key]!!
+//        }
+//        if (sum >= amount) {
+//            return if(sum == amount) 1 else 0
+//        }
+//        if (coinIndex > coins.lastIndex) {
+//            return 0
+//        }
+//        val sum = backtrack(coinIndex, sum + coins[coinIndex]) + backtrack(coinIndex+1, sum)
+//        memo[key] = sum
+//        return sum
+//    }
+//
+//    return backtrack(0, 0)
+//}
+//we are not allowing duplicates by increasing index each time for coin
+// so if index is 2 we do not consider coins[0] and coins[1] to add
+//TLE
+//fun change(amount: Int, coins: IntArray): Int {
+//
+//    fun backtrack(coinIndex: Int, sum: Int): Int {
+//        if (sum >= amount) {
+//            return if(sum == amount) 1 else 0
+//        }
+//        if (coinIndex > coins.lastIndex) {
+//            return 0
+//        }
+//
+//        return backtrack(coinIndex, sum + coins[coinIndex]) + backtrack(coinIndex+1, sum)
+//    }
+//
+//    return backtrack(0, 0)
+//}
+// this naive approach do not work because of duplicates, e.g
+//5=2+2+1
+//5=1+2+2 -> not allowed
+//fun change(amount: Int, coins: IntArray): Int {
+//    fun backtrack(amountLeft: Int): Int {
+//        if (amountLeft <= 0) {
+//            return if(amountLeft == 0) 1 else 0
+//        }
+//
+//        val sum = coins.sumOf { coin ->
+//            backtrack(amountLeft - coin)
+//        }
+//        return sum
+//    }
+//
+//    return backtrack(amount)
+//}
+
+//322. Coin Change
+fun coinChange(coins: IntArray, amount: Int): Int {
+    //Int.MAX_VALUE could be also amount+1 because assuming the least coin value is 1 (constraint) we cannot use more than amount*1 coins because that would be too much
+    val dp = MutableList<Int>(amount+1) { Int.MAX_VALUE -1 } //index->amountLeft value-> minCoins. //-1 because '1 + dp[i-coin]' could overflow the value
+    dp[0] = 0
+    for(i in 1..amount) {
+        for(coin in coins) {
+            if (i-coin >= 0) {
+                dp[i] = min(dp[i], 1 + dp[i-coin]) //1 + because we are taking one coin from list to get to the dp[i-coin] (which holds min coins from that point to get to 0)
+            }
+        }
+
+    }
+    return if (dp[amount] == Int.MAX_VALUE - 1) -1 else dp[amount]
+}
+//this works
+//fun coinChange(coins: IntArray, amount: Int): Int {
+//    val memo = HashMap<Int, Int>()
+//    fun backtrack(amountLeft: Int): Int {
+//        val key = amountLeft
+//        if(memo.contains(key)) {
+//            return memo[key]!!
+//        }
+//        if (amountLeft <= 0) {
+//            return if(amountLeft == 0) 0 else -1
+//        }
+//
+//        var minCoins = Int.MAX_VALUE
+//        coins.forEach { coin ->
+//            val result = backtrack(amountLeft-coin)
+//            if(result >= 0) {
+//                minCoins = min(result+1, minCoins)
+//            }
+//        }
+//        val res = if(minCoins == Int.MAX_VALUE) -1 else minCoins
+//        memo[key] = res
+//        return res
+//    }
+//
+//    return backtrack(amount)
+//}
+//decreasing amount to 0 to avoid using long
+//fun coinChange(coins: IntArray, amount: Int): Int {
+//
+//    fun backtrack(amountLeft: Int, coinsUsed: Int): Int {
+//        if (amountLeft <= 0) {
+//            return if(amountLeft == 0) coinsUsed else Int.MAX_VALUE
+//        }
+//
+//        var minCoins = Int.MAX_VALUE
+//        coins.forEach { coin ->
+//            val result = backtrack(amountLeft-coin, coinsUsed+1)
+//            minCoins = min(result, minCoins)
+//        }
+//
+//        return minCoins
+//    }
+//
+//    val result = backtrack(amount, 0)
+//    return if(result == Int.MAX_VALUE) -1 else result
+//}
+//also TLE ?
+//fun coinChange(coins: IntArray, amount: Int): Int {
+//    val memo = HashMap<Pair<Long, Int>, Int>()
+//    fun backtrack(sum: Long, coinsUsed: Int): Int {
+//        val key = sum to coinsUsed
+//        if(memo.contains(key)) {
+//            return memo[key]!!
+//        }
+//        if (sum >= amount) {
+//            return if(sum == amount.toLong()) coinsUsed else Int.MAX_VALUE
+//        }
+//        var minCoins: Int = Int.MAX_VALUE
+//        coins.forEach { coin ->
+//            val coins = backtrack(sum+coin, coinsUsed+1)
+//            if (coins < minCoins) minCoins = coins
+//        }
+//        memo[key] = minCoins
+//        return minCoins
+//    }
+//    val result = backtrack(0, 0)
+//    return if(result == Int.MAX_VALUE) -1 else result
+//}
+//time limit exceeded
+//fun coinChange(coins: IntArray, amount: Int): Int {
+//    fun backtrack(sum: Long, coinsUsed: Int): Int? {
+//        if (sum >= amount) {
+//            return if(sum == amount.toLong()) coinsUsed else null
+//        }
+//        var minCoins: Int? = null
+//        coins.forEach { coin ->
+//            val coins = backtrack(sum+coin, coinsUsed+1)
+//            if (minCoins == null) minCoins = coins
+//            else if (coins != null && coins < minCoins) minCoins = coins
+//        }
+//        return minCoins
+//    }
+//    return backtrack(0, 0) ?: -1
+//}
+
+//494. Target Sum
+//for bottom up dp (not suer if completely understand it)
+//analogy for unique paths
+//always going up y by 1 (always adding one more number)
+//but going right/left by x amount (not 1)
+//and you want to land not at the BRC but somewhere where x=target
+// dp[x][y] = val  //y-index, x-sum, val-solutions
+// but sum can be over target (or in negative) sadly so it would not have a limit
+// instead make a hashmap of solutions where key-sum, value-solutions
+fun findTargetSumWays(nums: IntArray, target: Int): Int {
+    val dp = MutableList(nums.size+1) { mutableMapOf<Int, Int>() }
+    dp[0][0] = 1
+
+    for (i in 0..nums.size-1){
+        for (entry in dp[i]) {
+            val (sum, solutions) = entry
+            dp[i+1][sum+nums[i]] = (dp[i+1][sum+nums[i]] ?: 0) + solutions
+            dp[i+1][sum-nums[i]] = (dp[i+1][sum-nums[i]] ?: 0) + solutions
+        }
+    }
+
+    return dp[nums.size][target] ?: 0
+}
+//with memo
+//fun findTargetSumWays(nums: IntArray, target: Int): Int {
+//
+//    val memo = HashMap<Pair<Int, Int>, Int>()
+//
+//    fun backtrack(index: Int, sum: Int): Int {
+//        if (index > nums.lastIndex) {
+//            return if(sum == target) 1 else 0
+//        }
+//        val key = index to sum
+//        if(memo.contains(key)) {
+//            return memo[key]!!
+//        }
+//        val solutions = backtrack(index+1, sum+nums[index]) + backtrack(index+1, sum-nums[index])
+//        memo[key] = solutions
+//        return solutions
+//    }
+//    return backtrack(0, 0)
+//}
+//actually got accepted wtih just backtrack lol
+//fun findTargetSumWays(nums: IntArray, target: Int): Int {
+//
+//    fun backtrack(index: Int, sum: Int): Int {
+//        if (index > nums.lastIndex) {
+//            return if(sum == target) 1 else 0
+//        }
+//        return backtrack(index+1, sum+nums[index]) + backtrack(index+1, sum-nums[index])
+//    }
+//    return backtrack(0, 0)
+//}
+
 //62. Unique Paths
-// could be also written as going up
+// could be also written as going up (below)
 fun uniquePaths(m: Int, n: Int): Int {
     val dp = MutableList(m) { MutableList(n) { 0 } }
+    //val array = Array(m) { IntArray(n) } or like that
     for (i in 0..n-1){
         dp[m-1][i] = 1
     }
@@ -88,6 +304,36 @@ fun uniquePaths(m: Int, n: Int): Int {
 
     return dp[0][0]
 }
+//going up
+// could be even shorter going by individual row at a time (below)
+//fun uniquePaths(m: Int, n: Int): Int {
+//    val dp = MutableList(m) { MutableList(n) { 0 } }
+//    for (i in 0..m-1){
+//        dp[i][0] = 1
+//    }
+//    for (i in 0..n-1){
+//        dp[0][i] = 1
+//    }
+//
+//    for (i in 1..m-1){
+//        for (j in 1..n-1) {
+//            dp[i][j] = dp[i-1][j] + dp[i][j-1]
+//        }
+//    }
+//
+//    return dp[m-1][n-1]
+//}
+//fun uniquePaths(m: Int, n: Int): Int {
+//    val dp = IntArray(n) { 1 }
+//
+//    for (i in 1..m-1){
+//        for (j in 1..n-1) {
+//            dp[j] = dp[j] + dp[j-1]
+//        }
+//    }
+//
+//    return dp[n-1]
+//}
 //with memoization, accepted
 //fun uniquePaths(m: Int, n: Int): Int {
 //    val memo = HashMap<Pair<Int, Int>, Int>()
