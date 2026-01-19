@@ -1,7 +1,6 @@
 import java.util.LinkedList
 import java.util.PriorityQueue
 import java.util.Stack
-import java.util.TreeSet
 import kotlin.collections.ArrayDeque
 import kotlin.collections.ArrayList
 import kotlin.collections.HashMap
@@ -25,7 +24,6 @@ import kotlin.collections.listOf
 import kotlin.collections.map
 import kotlin.collections.mapIndexed
 import kotlin.collections.mapOf
-import kotlin.collections.max
 import kotlin.collections.mutableListOf
 import kotlin.collections.mutableMapOf
 import kotlin.collections.plus
@@ -35,6 +33,7 @@ import kotlin.collections.slice
 import kotlin.collections.sum
 import kotlin.collections.toIntArray
 import kotlin.collections.toMap
+import kotlin.math.exp
 import kotlin.math.max
 import kotlin.math.min
 
@@ -69,6 +68,353 @@ class TreeNode(var `val`: Int) {
     var left: TreeNode? = null
     var right: TreeNode? = null
 }
+
+fun insert(intervals: Array<IntArray>, newInterval: IntArray): Array<IntArray> {
+    //[1, 10], [12, 15], n: [7, 20]
+    val mergedIntervals = ArrayList<IntArray>()
+
+    var prevInterval = intervals[0]
+    for(i in 1..intervals.lastIndex) {
+        val (start, end) = intervals[i]
+        if(start <= prevInterval[1]) {
+            prevInterval = listOf(prevInterval[0], max(prevInterval[1], end)).toIntArray()
+        } else {
+            mergedIntervals.add(prevInterval)
+            prevInterval = intervals[i]
+        }
+    }
+    mergedIntervals.add(prevInterval)
+
+    return mergedIntervals.toTypedArray()
+
+}
+
+//56. Merge Intervals
+fun merge(intervals: Array<IntArray>): Array<IntArray> {
+    intervals.sortBy { it[0] }
+    val mergedIntervals = ArrayList<IntArray>()
+
+    //[1, 10], [5, 12]
+    var lastInterval = intervals[0]
+    for (i in 1..intervals.lastIndex) {
+        val (start, end) = intervals[i]
+        if (start <= lastInterval[1]) {
+            lastInterval = listOf(lastInterval[0], max(lastInterval[1], end)).toIntArray()
+        } else {
+            mergedIntervals.add(lastInterval)
+            lastInterval = intervals[i]
+        }
+    }
+    mergedIntervals.add(lastInterval)
+
+    return mergedIntervals.toTypedArray()
+}
+
+//452. Minimum Number of Arrows to Burst Balloons
+//storing just prevPointEnd
+fun findMinArrowShots(points: Array<IntArray>): Int {
+    points.sortBy { it[0] }
+
+    var minShots = 1
+    var prevPointEnd = points[0][1]
+    //[1, 10], [8, 12]
+    for (i in 1..points.lastIndex) {
+        val (start, end) = points[i]
+        if(start <= prevPointEnd) {
+            prevPointEnd = min(end, prevPointEnd)
+        } else {
+            minShots++
+            prevPointEnd = end
+        }
+    }
+
+    return minShots
+}
+//fun findMinArrowShots(points: Array<IntArray>): Int {
+//    points.sortBy { it[0] }
+//
+//    var minShots = 1
+//    var prevPoint = points[0][0] to points[0][1]
+//    //[1, 10], [8, 12]
+//    for (i in 1..points.lastIndex) {
+//        val (start, end) = points[i]
+//        if(start <= prevPoint.second) {
+//            prevPoint = start to min(end, prevPoint.second)
+//        } else {
+//            minShots++
+//            prevPoint = start to end
+//        }
+//    }
+//
+//    return minShots
+//}
+//435. Non-overlapping Intervals
+fun eraseOverlapIntervals(intervals: Array<IntArray>): Int {
+    intervals.sortBy{ it[1] }
+
+    var prevIntervalEnd = intervals[0][1]
+    var minRemove = 0
+    for(i in 1..intervals.lastIndex) {
+        val (start, end) = intervals[i]
+        if(start < prevIntervalEnd) {
+            minRemove++
+            prevIntervalEnd = min(prevIntervalEnd, end)
+        } else {
+            prevIntervalEnd = end
+        }
+    }
+
+    return minRemove
+}
+
+//2300. Successful Pairs of Spells and Potions
+fun successfulPairs(spells: IntArray, potions: IntArray, success: Long): IntArray {
+    potions.sort()
+
+    fun binarySearchForGreater(spell: Int): Int {
+        var left = 0
+        var right = potions.lastIndex
+
+        //[1, 2, 3, 4, 5] //spell: 5 , success: 10
+        while(left <= right) {
+            val mid = left + (right - left)/2
+            val potion = potions[mid]
+            if (potion.toLong() * spell >= success) { //edge case for long
+                right = mid - 1
+            } else {
+                left = mid + 1
+            }
+        }
+        return left
+    }
+
+    return spells.map { spell ->
+        val leftIndex = binarySearchForGreater(spell)
+        potions.size - leftIndex
+    }.toIntArray()
+}
+//recursive
+//fun successfulPairs(spells: IntArray, potions: IntArray, success: Long): IntArray {
+//    potions.sort()
+//
+//    fun binarySearchForGreater(left: Int, right: Int, spell: Int): Int {
+//        if(left > right){
+//            return left
+//        }
+//        val mid = left + (right - left)/2
+//        val potion = potions[mid]
+//        return if (potion.toLong() * spell >= success) {
+//            binarySearchForGreater(left, mid-1, spell)
+//        } else {
+//            binarySearchForGreater(mid+1, right, spell)
+//        }
+//    }
+//
+//    return spells.map { spell ->
+//        val leftIndex = binarySearchForGreater(0, potions.lastIndex, spell)
+//        potions.size - leftIndex
+//    }.toIntArray()
+//}
+
+
+//374. Guess Number Higher or Lower
+//class Solution:GuessGame() {
+//
+//    //1...5..10. //7
+//    override fun guessNumber(n:Int):Int {
+//        fun binarySearch(left: Int, right: Int): Int {
+//            if (left > right) { //not necessary here as we are guaranteed solution
+//                return -1
+//            }
+//            val mid = ((left.toLong() + right)/2).toInt()
+//            val guess = guess(mid)
+//            return when (guess) {
+//                1 ->  binarySearch(mid+1, right)
+//                -1 -> binarySearch(left, mid-1)
+//                else -> mid
+//            }
+//        }
+//        return binarySearch(1, n)
+//    }
+//}
+//class Solution:GuessGame() {
+//
+//    //1...5..10. //7
+//    override fun guessNumber(n:Int):Int {
+//        var left= 1
+//        var right = n
+//
+//        while(left <= right) {
+//            val mid = ((left.toLong() + right)/2).toInt() //or left + ((right - left) / 2) to never go above Int
+//            val guess = guess(mid)
+//            when (guess) {
+//                0 -> return mid
+//                1 -> left = mid + 1
+//                -1 -> right = mid - 1
+//            }
+//        }
+//
+//        return left
+//
+//    }
+//}
+
+//460. LFU Cache
+class LFUCache(capacity: Int) {
+    private val capacity = capacity
+    private val cache = HashMap<Int, Int>() //key -> value
+    private val cacheCount = HashMap<Int, Int>() //key -> count  //could be moved inside the cache as Pair?
+    private val countToKeysAccess = HashMap<Int, LinkedHashSet<Int>>()
+    private var minCount = 1
+
+    fun get(key: Int): Int {
+        val value = cache[key]
+        if(value == null) {
+            return -1
+        }
+        updateUsage(key)
+        return value
+    }
+
+    fun put(key: Int, value: Int) {
+        if(!cache.contains(key) && cache.size >= capacity) {
+            val possibleKeys = countToKeysAccess[minCount]
+            val lruKey = possibleKeys!!.first()
+            possibleKeys.remove(lruKey)
+            cacheCount.remove(lruKey)
+            cache.remove(lruKey)
+        }
+        cache[key] = value
+        updateUsage(key)
+
+    }
+
+    private fun updateUsage(key: Int) {
+        val currentCount = (cacheCount[key] ?: 0)
+        val newCount = currentCount+1
+        val keys = countToKeysAccess[currentCount]
+        keys?.remove(key)
+        countToKeysAccess[newCount] = (countToKeysAccess[newCount] ?: LinkedHashSet()).apply { add(key) }
+        cacheCount[key] = newCount
+        minCount = if(keys == null) 1 else if(currentCount == minCount && keys.isEmpty()) newCount else minCount
+        //minCount = when {
+        //            keys == null -> 1
+        //            currentCount == minCount && keys.isEmpty() -> newCount
+        //            else -> minCount
+        //        }
+    }
+}
+
+//146. LRU Cache
+//accessOrder – the ordering mode - true for access-order, false for insertion-order
+class LRUCache(capacity: Int) {
+    val cache = LinkedHashMap<Int, Int>(
+        /* initialCapacity = */ capacity,
+        /* loadFactor = */ 1.0f, //ensures no resizing will happne
+        /* accessOrder = */ true
+    )
+    val capacity = capacity
+
+
+    fun get(key: Int): Int {
+        return cache[key] ?: -1
+    }
+
+    fun put(key: Int, value: Int) {
+        if (!cache.contains(key)) {
+            ensureCacheCapacityForNextElement()
+        }
+        cache.put(key, value)
+    }
+
+    //could also override method
+    // override fun removeEldestEntry(eldest: MutableMap.MutableEntry<K, V>?): Boolean {
+    //        return size > capacity
+    //    }
+    fun ensureCacheCapacityForNextElement() {
+        if(cache.size >= capacity) {
+            val firstKey = cache.keys.first()
+            cache.remove(firstKey)
+        }
+    }
+}
+// using LinkedHashMap
+// with false (default) for access order
+//accessOrder – the ordering mode - true for access-order, false for insertion-order
+//class LRUCache(capacity: Int) {
+//    private val cache = LinkedHashMap<Int, Int>(capacity)
+//    private val capacity = capacity
+//
+//
+//    fun get(key: Int): Int {
+//        val cacheValue = cache[key]
+//        if(cacheValue == null) {
+//            return -1
+//        }
+//        updateUsage(key, cacheValue)
+//        return cacheValue
+//    }
+//
+//    fun put(key: Int, value: Int) {
+//        if (!cache.contains(key)) {
+//            ensureCacheCapacityForNextElement()
+//        }
+//        updateUsage(key, value)
+//    }
+//
+//    fun updateUsage(key: Int, value: Int) {
+//        cache.remove(key)
+//        cache.put(key, value)
+//    }
+//
+//    fun ensureCacheCapacityForNextElement() {
+//        if(cache.size >= capacity) {
+//            val firstKey = cache.keys.first()
+//            cache.remove(firstKey)
+//        }
+//    }
+//}
+//here we use LinkedList together with Hashmap
+// we could further optimize this by creating a double linked list with some Node class
+// then store an exact Node pointer in cache
+// then remove is just prev -> next for moving pointers
+//http://neetcode.io/solutions/lru-cache
+//class LRUCache(capacity: Int) {
+//    val usage = LinkedList<Int>() //ArrayDeque is actually way faster here, probably bcz removal from middle is a little faster for arraydeque
+//    val cache = HashMap<Int, Int>(capacity)
+//    val capacity = capacity
+//
+//
+//    fun get(key: Int): Int {
+//        val cacheValue = cache[key]
+//        if(cacheValue == null) {
+//            return -1
+//        }
+//        updateUsage(key)
+//        return cacheValue
+//    }
+//
+//    fun put(key: Int, value: Int) {
+//        if (!cache.contains(key)) {
+//            ensureCacheCapacityForNextElement()
+//        }
+//        updateUsage(key)
+//        cache[key] = value
+//    }
+//
+//    fun updateUsage(key: Int) {
+//        usage.remove(key)
+//        usage.addLast(key)
+//    }
+//
+//    fun ensureCacheCapacityForNextElement() {
+//        if(cache.size >= capacity) {
+//            val keyToDelete = usage.first()
+//            usage.removeFirst()
+//            cache.remove(keyToDelete)
+//        }
+//    }
+//}
 
 //518. Coin Change II
 //TLE also
